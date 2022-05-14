@@ -4,6 +4,7 @@ Template for API response
 
 from enum import Enum
 
+
 class ResponseStatus(Enum):
     """
     Response status enum
@@ -12,10 +13,12 @@ class ResponseStatus(Enum):
     FAIL = "FAIL"
     ERROR = "ERROR"
 
+
 class Response:
     """
     General API response class
     """
+
     def __init__(self, status: ResponseStatus, data: any = None, message: str = None):
         self.status = status
         self.data = data
