@@ -3,6 +3,7 @@ Template for API response
 """
 
 from enum import Enum
+import json
 
 
 class ResponseStatus(Enum):
@@ -24,12 +25,12 @@ class Response:
         self.data = data
         self.message = message
 
-    def to_json(self) -> dict:
+    def to_json(self) -> str:
         """
-        Parse response class to dictionary
+        Json parser
         """
-        return {
+        return json.dumps({
             "status": self.status.name,
-            "data": self.data,
-            "message": self.message
-        }
+            "message": self.message,
+            "data": self.data
+        })

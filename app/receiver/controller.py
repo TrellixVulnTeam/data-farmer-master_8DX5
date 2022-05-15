@@ -3,10 +3,12 @@ Endpoints for experiment receiver module
 """
 
 import os
-from flask import Blueprint, request, current_app
-from werkzeug.utils import secure_filename
+from flask import Blueprint, request
+from docker.errors import DockerException
+from app.model.experiment import Experiment
 from app.model.response import Response, ResponseStatus
 from app.receiver import image_builder
+from app.combination import generator
 
 receiver_blueprint = Blueprint('receiver', __name__)
 
@@ -26,21 +28,41 @@ def upload() -> tuple[dict, int]:
         workers: number,
         tasks-per-worker: number
     """
-    file = request.files['experiment']
-    filename = secure_filename(file.filename)
-    file.save(os.path.join(current_app.config['UPLOADS_DIR'], filename))
+    try:
+        experiment_file = request.files['experiment']
+        plugin = request.form.get('plugin')
+        workers = int(request.form.get('workers'))
+        tasks_per_worker = int(request.form.get('tasks_per_worker'))
 
-    plugin = request.form.get('plugin')
-    workers = int(request.form.get('workers'))
-    tasks_per_worker = int(request.form.get('tasks_per_worker'))
+        # validate request
+        if not all([plugin, workers, tasks_per_worker, experiment_file]):
+            raise ValueError()
 
-    if not all([plugin, workers, tasks_per_worker]):
+        # create experiment
+        experiment = Experiment(
+            plugin=plugin,
+            workers=workers,
+            tasks_per_worker=tasks_per_worker
+        )
+
+        experiment_file.save(os.path.join(experiment.archive_path))
+        _image = image_builder.build(experiment)
+        tasks = generator.create_tasks(experiment.parameters_file)
+        print(f"Tasks, created: {len(tasks)}")
+
+        return Response(
+            status=ResponseStatus.SUCCESS,
+            data=experiment.to_json(),
+            message="The experiment was successfully created").to_json(), 201
+    except ValueError:
         return Response(
             status=ResponseStatus.ERROR,
-            message="Please provide all three: plugin, workers and tasks_per_worker").to_json(), 400
-
-    image_builder.build(current_app.config['UPLOADS_DIR'] + '/' + filename)
-
-    return Response(
-        status=ResponseStatus.SUCCESS,
-        message="The experiment was successfully created").to_json(), 201
+            message="Incorrect request format").to_json(), 400
+    except FileNotFoundError:
+        return Response(
+            status=ResponseStatus.ERROR,
+            message="Could not save experiment file").to_json(), 500
+    except DockerException as err:
+        return Response(
+            status=ResponseStatus.ERROR,
+            message=f"Docker API error: {err}").to_json(), 500

@@ -1,3 +1,5 @@
 Flask==2.1.2
 Werkzeug==2.0.3
+pylint==2.13.8
+docker==5.0.3
 
