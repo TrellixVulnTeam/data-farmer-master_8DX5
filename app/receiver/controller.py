@@ -8,15 +8,15 @@ from docker.errors import DockerException
 from app.model.experiment import Experiment
 from app.model.response import Response, ResponseStatus
 from app.receiver import image_builder
-from app.combination import generator
+from app.model import task
 
 receiver_blueprint = Blueprint('receiver', __name__)
 
 
 @receiver_blueprint.route('/upload', methods=["POST"])
-def upload() -> tuple[dict, int]:
+def upload() -> tuple[str, int]:
     """
-    This endpoint creates a docker image for an experiment, then it
+    This endpoint creates a Docker image for an experiment, then it
     is uploaded to Dockerhub
 
     It requires tar.gz file containing at least:
@@ -45,15 +45,16 @@ def upload() -> tuple[dict, int]:
             tasks_per_worker=tasks_per_worker
         )
 
+        paths = experiment.get_paths()
+
         experiment_file.save(os.path.join(experiment.archive_path))
         _image = image_builder.build(experiment)
-        tasks = generator.create_tasks(experiment.parameters_file)
-        print(f"Tasks, created: {len(tasks)}")
+        tasks = task.create_tasks(paths['parameters_definition_path'])
 
         return Response(
             status=ResponseStatus.SUCCESS,
             data=experiment.to_json(),
-            message="The experiment was successfully created").to_json(), 201
+            message=f"The experiment was successfully created. Tasks: {len(tasks)}").to_json(), 201
     except ValueError:
         return Response(
             status=ResponseStatus.ERROR,

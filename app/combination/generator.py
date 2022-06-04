@@ -1,16 +1,14 @@
+"""
+Logic responsible for creating a product of parameters.
+"""
 import itertools
 
-from app.model import parameter
-from app.model.task import Task
 
-
-def get_parameter_space(parameters):
-    values = map(lambda p: p.get_values(), parameters)
-    space = itertools.product(*values)
-    return list(space)
-
-
-def create_tasks(parameters_file_path: str):
-    parameters = parameter.from_json_file(parameters_file_path)
-    space = get_parameter_space(parameters)
-    return [Task(parameters, values) for values in space]
+def get_parameters_product(parameter_definitions):
+    """
+    Generates a product of all parameter values based on their definitions,
+    preserving the order of the parameters.
+    """
+    values = map(lambda p: p.get_values(), parameter_definitions)
+    product = itertools.product(*values)
+    return list(product)

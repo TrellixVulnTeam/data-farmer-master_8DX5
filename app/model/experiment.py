@@ -1,6 +1,11 @@
+"""
+Logic related to dealing with an experiment data structure
+"""
+
 import uuid
 import json
 from flask import current_app
+
 
 class Experiment:
     """
@@ -14,13 +19,29 @@ class Experiment:
         self.workers = workers
         self.tasks_per_worker = tasks_per_worker
 
-        self.files_path = self.archive_path + "-content"
-        self.image_tag = f"data-farmer-experiment-{self.uuid}"
-        self.parameters_file = self.files_path + "/params.json"
-        self.run_file = self.files_path + "/run.sh"
+    def get_image_tag(self):
+        """
+        Returns an image tag that the worker spawning module
+        will use to tag its workers
+        """
+        return f"data-farmer-experiment-{self.uuid}"
+
+    def get_paths(self):
+        """
+        Returns paths to the extracted archive content,
+        the JSON parameters definition file
+        and the script that runs user's program
+        """
+        files_path = self.archive_path + "-content"
+
+        return {
+            "files_path": files_path,
+            "parameters_definition_path": files_path + "/params.json",
+            "run_file": files_path + "/run.sh"
+        }
 
     def to_json(self) -> str:
         """
-        Json parser
+        JSON parser
         """
         return json.dumps(self.__dict__)

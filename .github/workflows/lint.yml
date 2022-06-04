@@ -1,0 +1,23 @@
+name: Pylint
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+jobs:
+  lint:
+    name: Achieve score better than 7.0
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.9"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Lint with Pylint
+        # W0703: Catching too general exception Exception (broad-except)
+        run: pylint start.py app/*/*.py --fail-under 7 --disable=W0703

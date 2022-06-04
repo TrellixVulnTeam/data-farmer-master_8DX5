@@ -12,25 +12,26 @@ from app.model.experiment import Experiment
 
 def build(experiment: Experiment) -> Image:
     """
-    Builds a docker image
+    Builds a Docker image of a worker
     """
+    paths = experiment.get_paths()
 
     # extract archive
-    if not os.path.exists(experiment.files_path):
-        os.makedirs(experiment.files_path)
+    if not os.path.exists(paths['files_path']):
+        os.makedirs(paths['files_path'])
 
     with tarfile.open(experiment.archive_path) as file:
-        file.extractall(experiment.files_path)
+        file.extractall(paths['files_path'])
 
     # build image
     client = get_docker_client()
 
     image, _ = client.images.build(
         path='.',
-        dockerfile=current_app.config['BASE_DOCKERFILE'],
-        tag=experiment.image_tag,
+        dockerfile=current_app.config['WORKER_BASE_DOCKERFILE'],
+        tag=experiment.get_image_tag(),
         buildargs={
-            "experiment_files": experiment.files_path
+            "experiment_files": paths['files_path']
         }
     )
 

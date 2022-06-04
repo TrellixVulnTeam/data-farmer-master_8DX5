@@ -1,12 +1,14 @@
 """
-
 Setup of flask application
-
 """
 
 import os
 from flask import Flask
 from app.receiver.controller import receiver_blueprint
+
+from . import combination, model, receiver
+
+__all__ = [combination, model, receiver]
 
 app = Flask(__name__)
 
@@ -19,7 +21,6 @@ elif ENV == 'test':
     app.config.from_object('configuration.TestingConfig')
 else:
     app.config.from_object('app.config.DevelopmentConfig')
-
 
 # check if the directory for files uploaded via receiver exists - if not create it
 if not os.path.exists(app.config['UPLOADS_DIR']):
