@@ -17,6 +17,7 @@ class Experiment:
         self.plugin = plugin
         self.workers = workers
         self.tasks_per_worker = tasks_per_worker
+        self.worker_containers = []
 
     def get_image_tag(self):
         """

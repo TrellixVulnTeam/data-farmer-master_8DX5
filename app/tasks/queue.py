@@ -62,6 +62,7 @@ class TaskQueue(metaclass=TaskQueueMeta):
 queue_blueprint = Blueprint('queue', __name__)
 
 
+# todo: move to a dedicated api module
 @queue_blueprint.route('/tasks', methods=["GET"])
 def get_tasks():
     """

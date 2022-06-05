@@ -7,13 +7,14 @@ from flask import Blueprint, request
 from docker.errors import DockerException
 from app.model.experiment import Experiment
 from app.model.response import Response, ResponseStatus
-from app.receiver import image_builder
+from app.worker import image_builder, spawner
 from app.tasks import generator
 from app.tasks.queue import TaskQueue
 
 receiver_blueprint = Blueprint('receiver', __name__)
 
 
+# todo: move to a dedicated api module
 @receiver_blueprint.route('/upload', methods=["POST"])
 def upload():
     """
@@ -30,6 +31,7 @@ def upload():
         tasks-per-worker: number
     """
     try:
+        # todo: add logs
         experiment_file = request.files['experiment']
         plugin = request.form.get('plugin')
         workers = int(request.form.get('workers'))
@@ -50,17 +52,21 @@ def upload():
         experiment_file.save(os.path.join(experiment.archive_path))
 
         # build worker docker image
-        _image = image_builder.build(experiment)
+        image = image_builder.build(experiment)
 
         # create tasks out of the parameters
         tasks = generator.create_tasks(paths['parameters_definition_path'])
         task_queue = TaskQueue()
         task_queue.extend(tasks)
 
+        # spawn workers
+        containers = spawner.spawn(image, workers)
+        experiment.worker_containers = list(map(lambda c: c.name, containers))
+
         return Response(
             status=ResponseStatus.SUCCESS,
             data=experiment,
-            message=f"The experiment was successfully created. Tasks: {len(tasks)}"
+            message=f"The experiment was successfully created and the execution of {len(tasks)} tasks has just started."
         ).to_json(), 201, {'Content-Type': 'application/json'}
     except ValueError:
         return Response(
