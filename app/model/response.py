@@ -25,12 +25,16 @@ class Response:
         self.data = data
         self.message = message
 
-    def to_json(self) -> str:
+    def to_json(self):
         """
         Json parser
         """
-        return json.dumps({
-            "status": self.status.name,
-            "message": self.message,
-            "data": self.data
-        })
+        return json.dumps(
+            {
+                "status": self.status.name,
+                "message": self.message,
+                "data": self.data
+            },
+            default=lambda o: o.__dict__,
+            indent=2
+        )

@@ -3,7 +3,6 @@ Logic related to dealing with an experiment data structure
 """
 
 import uuid
-import json
 from flask import current_app
 
 
@@ -39,9 +38,3 @@ class Experiment:
             "parameters_definition_path": files_path + "/params.json",
             "run_file": files_path + "/run.sh"
         }
-
-    def to_json(self) -> str:
-        """
-        JSON parser
-        """
-        return json.dumps(self.__dict__)

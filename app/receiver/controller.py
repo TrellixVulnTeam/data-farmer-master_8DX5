@@ -8,13 +8,14 @@ from docker.errors import DockerException
 from app.model.experiment import Experiment
 from app.model.response import Response, ResponseStatus
 from app.receiver import image_builder
-from app.model import task
+from app.tasks import generator
+from app.tasks.queue import TaskQueue
 
 receiver_blueprint = Blueprint('receiver', __name__)
 
 
 @receiver_blueprint.route('/upload', methods=["POST"])
-def upload() -> tuple[str, int]:
+def upload():
     """
     This endpoint creates a Docker image for an experiment, then it
     is uploaded to Dockerhub
@@ -46,24 +47,33 @@ def upload() -> tuple[str, int]:
         )
 
         paths = experiment.get_paths()
-
         experiment_file.save(os.path.join(experiment.archive_path))
+
+        # build worker docker image
         _image = image_builder.build(experiment)
-        tasks = task.create_tasks(paths['parameters_definition_path'])
+
+        # create tasks out of the parameters
+        tasks = generator.create_tasks(paths['parameters_definition_path'])
+        task_queue = TaskQueue()
+        task_queue.extend(tasks)
 
         return Response(
             status=ResponseStatus.SUCCESS,
-            data=experiment.to_json(),
-            message=f"The experiment was successfully created. Tasks: {len(tasks)}").to_json(), 201
+            data=experiment,
+            message=f"The experiment was successfully created. Tasks: {len(tasks)}"
+        ).to_json(), 201, {'Content-Type': 'application/json'}
     except ValueError:
         return Response(
             status=ResponseStatus.ERROR,
-            message="Incorrect request format").to_json(), 400
+            message="Incorrect request format"
+        ).to_json(), 400, {'Content-Type': 'application/json'}
     except FileNotFoundError:
         return Response(
             status=ResponseStatus.ERROR,
-            message="Could not save experiment file").to_json(), 500
+            message="Could not save experiment file"
+        ).to_json(), 500, {'Content-Type': 'application/json'}
     except DockerException as err:
         return Response(
             status=ResponseStatus.ERROR,
-            message=f"Docker API error: {err}").to_json(), 500
+            message=f"Docker API error: {err}"
+        ).to_json(), 500, {'Content-Type': 'application/json'}

@@ -5,10 +5,11 @@ Setup of flask application
 import os
 from flask import Flask
 from app.receiver.controller import receiver_blueprint
+from app.tasks.queue import queue_blueprint
 
-from . import combination, model, receiver
+from . import tasks, model, receiver
 
-__all__ = [combination, model, receiver]
+__all__ = [tasks, model, receiver]
 
 app = Flask(__name__)
 
@@ -27,3 +28,4 @@ if not os.path.exists(app.config['UPLOADS_DIR']):
     os.makedirs(app.config['UPLOADS_DIR'])
 
 app.register_blueprint(receiver_blueprint, url_prefix='/receiver')
+app.register_blueprint(queue_blueprint, url_prefix='/queue')
