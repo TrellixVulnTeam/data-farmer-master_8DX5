@@ -30,6 +30,7 @@ def build(experiment: Experiment) -> Image:
         path='.',
         dockerfile=current_app.config['WORKER_BASE_DOCKERFILE'],
         tag=experiment.get_image_tag(),
+        rm=True,
         buildargs={
             "experiment_files": paths['files_path']
         }

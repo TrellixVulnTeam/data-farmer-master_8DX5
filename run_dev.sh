@@ -7,7 +7,9 @@ DOCKER_REPO=$1
 DOCKER_TAG=${2-latest}
 FLASK_PORT=${3:-5555}
 
-docker run -d \
+docker run --rm -d \
   -p "$FLASK_PORT:$FLASK_PORT" \
   -v /var/run/docker.sock:/var/run/docker.sock \
+  --name data-farmer-master-dev \
+  -e HOST="0.0.0.0" \
   "$DOCKER_REPO/data-farmer:$DOCKER_TAG"

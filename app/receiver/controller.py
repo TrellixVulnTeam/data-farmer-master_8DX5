@@ -5,6 +5,7 @@ Endpoints for experiment receiver module
 import os
 from flask import Blueprint, request
 from docker.errors import DockerException
+
 from app.model.experiment import Experiment
 from app.model.response import Response, ResponseStatus
 from app.worker import image_builder, spawner
@@ -30,6 +31,7 @@ def upload():
         workers: number,
         tasks-per-worker: number
     """
+
     try:
         # todo: add logs
         experiment_file = request.files['experiment']
@@ -60,13 +62,15 @@ def upload():
         task_queue.extend(tasks)
 
         # spawn workers
-        containers = spawner.spawn(image, workers)
+        containers = spawner.spawn(image, workers, tasks_per_worker)
+        # idea: containers lifetime etc. can be managed from here
         experiment.worker_containers = list(map(lambda c: c.name, containers))
 
         return Response(
             status=ResponseStatus.SUCCESS,
             data=experiment,
-            message=f"The experiment was successfully created and the execution of {len(tasks)} tasks has just started."
+            message=f"The experiment was successfully created and the execution of "
+                    f"{len(tasks)} tasks has just started."
         ).to_json(), 201, {'Content-Type': 'application/json'}
     except ValueError:
         return Response(

@@ -20,4 +20,4 @@ jobs:
           pip install -r requirements.txt
       - name: Lint with Pylint
         # W0703: Catching too general exception Exception (broad-except)
-        run: pylint start.py app//*.py --fail-under 7 --disable=W0703
+        run: pylint start.py app/**/*.py --fail-under 7 --disable=W0703

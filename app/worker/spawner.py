@@ -8,7 +8,7 @@ from flask import current_app
 from app import utils
 
 
-def spawn(image: Image, workers: int) -> list[Container]:
+def spawn(image: Image, workers: int, tasks_per_worker: int) -> list[Container]:
     """
     Spawns a given number of worker containers
     """
@@ -25,7 +25,10 @@ def spawn(image: Image, workers: int) -> list[Container]:
             environment={
                 # todo: figure out what to do with it
                 'MASTER_HOST': 'host.docker.internal',
-                'MASTER_PORT': current_app.config['PORT']
+                'MASTER_PORT': current_app.config['PORT'],
+                'TASKS_PER_WORKER': tasks_per_worker,
+                # see https://stackoverflow.com/questions/29663459/python-app-does-not-print-anything-when-running-detached-in-docker
+                'PYTHONUNBUFFERED': 1
             }
         )
 
